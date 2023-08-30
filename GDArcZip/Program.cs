@@ -16,34 +16,30 @@ namespace GDArcZip
         private readonly static string CFG = Path.Combine(CWD, "GDArcZip.cfg");
         private static Dictionary<string, string> cfgDict;
 
+        private static void Exit(string msg, int errCode = 0)
+        {
+            Console.WriteLine(msg);
+            Console.ReadLine();
+            Environment.Exit(errCode);
+        }
+
         static void Main(string[] args)
         {
             cfgDict = LoadCFGDict(CFG);
             SaveCFGDict(CFG, cfgDict);
             if (args.Length == 0)
-            {
-                Console.WriteLine($"Howto:");
-                Console.WriteLine($"Drag and drop text_xx.arc or text_xx.zip onto the exe");
-                Console.ReadLine();
-                return;
-            }
+                Exit($"Drag and drop text_xx.arc or text_xx.zip onto the exe");
             foreach(var arg in args)
-            {
                 ProcessFile(arg);
-            }
-            Console.WriteLine("Done");
-            Console.ReadLine();
+            Exit($"Done");
         }
 
         private static void ProcessFile(string inFile)
         {
             Console.WriteLine($"processing file: {inFile}");
             if (!File.Exists(inFile))
-            {
-                Console.WriteLine($"File '{inFile}' not found");
-                Console.ReadLine();
-                return;
-            }
+                Exit($"File '{inFile}' not found");
+
             var archTool = $"{cfgDict["gdpath"]}/ArchiveTool.exe";
             var inFilePath = Path.GetDirectoryName(inFile);
             var inFileName = Path.GetFileNameWithoutExtension(inFile);
@@ -60,6 +56,8 @@ namespace GDArcZip
                         File.Copy(inFile, inFileTemp);
                         RunProcess(archTool, $"\"{inFileTemp}\" -extract \"{tmpPath}\"");
                         var outFile = Path.Combine(inFilePath, $"{inFileName}.zip");
+                        if (File.Exists(outFile))
+                            File.Delete(outFile);
                         ZipFile.CreateFromDirectory(Path.Combine(tmpPath, inFileName.ToLower()), outFile);
                     }
                     break;
@@ -69,9 +67,9 @@ namespace GDArcZip
                         var outFileTemp = Path.Combine(tmpPath2, $"{inFileName}.arc");
                         ZipFile.ExtractToDirectory(inFile, tmpPath);
                         foreach (var f in Directory.GetFiles(tmpPath, "*.*", SearchOption.AllDirectories))
-                        {
                             RunProcess(archTool, $"\"{outFileTemp}\" -replace \"{f.Substring(tmpPath.Length + 1)}\" \"{tmpPath}\" 9");
-                        }
+                        if (File.Exists(outFile))
+                            File.Delete(outFile);
                         File.Move(outFileTemp, outFile);
                     }
                     break;
@@ -84,33 +82,22 @@ namespace GDArcZip
         private static Dictionary<string, string> LoadCFGDict(string cfgFile)
         {
             if (!File.Exists(cfgFile))
-            {
                 File.WriteAllText(cfgFile, "");
-            }
             var cfgDict = new Dictionary<string, string>();
             foreach (var cfgLine in File.ReadAllLines(cfgFile))
             {
                 var cfgLineSplit = cfgLine.Split('=');
                 if (cfgLineSplit.Length == 2)
-                {
                     cfgDict.Add(cfgLineSplit[0].Trim().ToLower(), cfgLineSplit[1].Trim());
-                }
             }
             var gdPath = "";
-            if (cfgDict.ContainsKey("gdpath"))
-            {
-                if (!Directory.Exists(cfgDict["gdpath"]))
-                {
-                    cfgDict.Remove("gdpath");
-                }
-            }
+            if (cfgDict.ContainsKey("gdpath") && !Directory.Exists(cfgDict["gdpath"]))
+                cfgDict.Remove("gdpath");
             while (!cfgDict.ContainsKey("gdpath"))
             {
                 gdPath = Prompt("Enter GD Path:", gdPath);
                 if (File.Exists(Path.Combine(gdPath, "ArchiveTool.exe")))
-                {
                     cfgDict.Add("gdpath", gdPath);
-                }
             }
             return cfgDict;
         }
@@ -119,9 +106,7 @@ namespace GDArcZip
         {
             var lines = new List<string>();
             foreach (var kvp in cfgDict)
-            {
                 lines.Add($"{kvp.Key}={kvp.Value}");
-            }
             File.WriteAllLines(cfgFile, lines);
         }
 
