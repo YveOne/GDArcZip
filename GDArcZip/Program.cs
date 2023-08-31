@@ -29,8 +29,8 @@ namespace GDArcZip
             SaveCFGDict(CFG, cfgDict);
             if (args.Length == 0)
                 Exit($"Drag and drop text_xx.arc or text_xx.zip onto the exe");
-            foreach(var arg in args)
-                ProcessFile(arg);
+            foreach(var file in args)
+                ProcessFile(file);
             Exit($"Done");
         }
 
@@ -77,6 +77,8 @@ namespace GDArcZip
                     Console.WriteLine($"Unsupported file extension {inFileExt}");
                     break;
             }
+            Directory.Delete(tmpPath, true);
+            Directory.Delete(tmpPath2, true);
         }
 
         private static Dictionary<string, string> LoadCFGDict(string cfgFile)
