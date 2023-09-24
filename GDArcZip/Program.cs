@@ -8,20 +8,28 @@ using System.IO.Compression;
 using System.Diagnostics;
 using System.Windows.Forms;
 
+using Utils;
+
 namespace GDArcZip
 {
     internal class Program
     {
-        private readonly static string CWD = Application.StartupPath;
-        private readonly static string CFG = Path.Combine(CWD, "GDArcZip.cfg");
-        private static Dictionary<string, string> cfgDict;
+
+        #region common stuff
+
+        private static readonly string CWD = Application.StartupPath;
 
         private static void Exit(string msg, int errCode = 0)
         {
             Console.WriteLine(msg);
-            Console.ReadLine();
+            System.Threading.Thread.Sleep(5000);
             Environment.Exit(errCode);
         }
+
+        #endregion
+
+        private readonly static string CFG = Path.Combine(CWD, "GDArcZip.cfg");
+        private static Dictionary<string, string> cfgDict;
 
         static void Main(string[] args)
         {
@@ -44,9 +52,9 @@ namespace GDArcZip
             var inFilePath = Path.GetDirectoryName(inFile);
             var inFileName = Path.GetFileNameWithoutExtension(inFile);
             var inFileExt = Path.GetExtension(inFile).ToLower();
-            string tmpPath = Path.GetTempPath() + Guid.NewGuid();
+            string tmpPath = Funcs.GetTempFileName();
             Directory.CreateDirectory(tmpPath);
-            string tmpPath2 = Path.GetTempPath() + Guid.NewGuid();
+            string tmpPath2 = Funcs.GetTempFileName();
             Directory.CreateDirectory(tmpPath2);
             switch (inFileExt)
             {
@@ -85,13 +93,7 @@ namespace GDArcZip
         {
             if (!File.Exists(cfgFile))
                 File.WriteAllText(cfgFile, "");
-            var cfgDict = new Dictionary<string, string>();
-            foreach (var cfgLine in File.ReadAllLines(cfgFile))
-            {
-                var cfgLineSplit = cfgLine.Split('=');
-                if (cfgLineSplit.Length == 2)
-                    cfgDict.Add(cfgLineSplit[0].Trim().ToLower(), cfgLineSplit[1].Trim());
-            }
+            var cfgDict = Funcs.ReadDictionaryFromFile(cfgFile, '=');
             var gdPath = "";
             if (cfgDict.ContainsKey("gdpath") && !Directory.Exists(cfgDict["gdpath"]))
                 cfgDict.Remove("gdpath");

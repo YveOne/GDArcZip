@@ -1,3 +1,6 @@
 
+v1.0.4
+- Tool does now sleep for 5 seconds instead of waiting for user input when an error occurs
+
 v1.0.3
 - Temporary extracted files will be deleted from temp directory before finishing
