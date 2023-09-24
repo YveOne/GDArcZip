@@ -52,6 +52,7 @@ namespace Utils
             var split = line.Split(splitBy);
             if (split.Length < 2) return false;
             var key = split[0].Trim();
+            if (key == "") return false;
             if (key.StartsWith("#")) return false;
             if (key.StartsWith("//")) return false;
             if (key.StartsWith("--")) return false;
